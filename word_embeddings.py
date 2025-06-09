@@ -22,22 +22,17 @@ subprocess.run(
     check=True
 )
 
-embed = hub.Module("/content/module_useT")
+embed = hub.load("/content/module_useT")
 
 #GUSE transformer
 def encodeData(messages): 
   # Red logging output.
-  tf.logging.set_verbosity(tf.logging.ERROR)
-  with tf.Session() as session:
-      session.run([tf.global_variables_initializer(), tf.tables_initializer()])
-      message_embeddings = session.run(embed(messages))
-
-  final_embeddings = pd.DataFrame(data=message_embeddings)
-
+  message_embeddings = embed(messages)
+  final_embeddings = pd.DataFrame(data=message_embeddings.numpy())
   return final_embeddings
 
 # text feat -> word embedding
-training_regular = pd.read_csv('../data/training-set.csv')['selftext']
+training_regular = pd.read_csv('data/training-set.csv')['selftext']
 new_training_regular = encodeData(training_regular)
 new_training_regular.to_csv('guse-training-features.csv')
 
@@ -79,3 +74,6 @@ df = df.rename(columns={'selftext': 0, 'is_suicide': 1})
 
 bert_features = getFeatures(df)
 np.savetxt("bert-training-features.csv", bert_features, delimiter=',')
+
+torch.save(model.state_dict(), 'bert_model.pth')
+print("bert saved as bert_model.pth")
